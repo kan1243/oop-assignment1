@@ -27,7 +27,19 @@ class Member:
 
     def show_given_member_borrowed(self, member_id):
         member = func.find_member(member_id)
+        if not member:
+            print("Error: Member not found!")
+            return
         
+        print(f"\n=== Books borrowed by {member['name']} ===")
+        if not member['borrowed_books']:
+            print("No books currently borrowed")
+        else:
+            for book_id in member['borrowed_books']:
+                book = func.find_book(book_id)
+                if book:
+                    print(f"- {book['title']} by {book['author']}")    
+
 
 class Library:
     def __init__(self):
