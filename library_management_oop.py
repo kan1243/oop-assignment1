@@ -11,7 +11,8 @@ class Book:
         if self.available_cp > 0:
             self.available_cp -= 1
             return True
-        return False
+        else:
+            return False
 
 
     def return_book(self):
@@ -19,11 +20,11 @@ class Book:
 
 
 class Member:
-    def __init__(self, id_member:str, name:str, email:str, borrowed_books:list = []):
+    def __init__(self, id_member:str, name:str, email:str):
         self.member_id = id_member
         self.name = name
         self.email = email
-        self.borrowed_books = borrowed_books
+        self.borrowed_books = []
 
 
     def borrow_book(self, book):
