@@ -26,20 +26,16 @@ class Member:
         self.borrowed_books = borrowed_books
 
 
-    def show_given_member_borrowed(self, member_id):
-        member = func.find_member(member_id)
-        if not member:
-            print("Error: Member not found!")
-            return
-        
-        print(f"\n=== Books borrowed by {member.name} ===")
-        if not member.borrowed_books:
-            print("No books currently borrowed")
-        else:
-            for book_id in member.borrowed_books:
-                book = func.find_book(book_id)
-                if book:
-                    print(f"- {book.title} by {book.author}")
+    def borrow_book(self, book):
+        if book.borrow_book():
+            transaction = {
+            'member_id': self.id,
+            'book_id': book.id,
+            'member_name': self.name,
+            'book_title': book.title
+            }
+            self.borrowed_books.append(transaction)
+            print(f"{self.name} borrowed '{book.title}'")
 
 
 class Library:
@@ -81,18 +77,7 @@ class Library:
             return False
         
         # Process the borrowing
-        if book.borrow_book():
-            member.borrowed_books.append(book_id)
-
-        transaction = {
-            'member_id': member_id,
-            'book_id': book_id,
-            'member_name': member.name,
-            'book_title': book.title
-        }
-        member.borrowed_books.append(transaction)
-
-        print(f"{member.name} borrowed '{book.title}'")
+        member.borrow_book(book)
         return True
         
 
@@ -123,26 +108,31 @@ class Library:
         return True
     
 
-    def display_operation(self, condition = None):
+    def display_operation(self, condition = None, condition_data = None):
         '''display all data in library (uo to condition if no condition mean all)'''
         if condition == 'display_book':
-            print("--- All books in library ---")
+            print("=== Available Books ===")
             for i in range(len(self.books)):
                 book = self.books[i]
                 if book.available_cp == 0:
                     continue
                 else:
-                    print(f"{i+1}. {book.title}(id: {book.id}, author: {book.author}) {book.total_cp}/{book.available_cp}")
-
-            print(f"Total books: {len(self.books)}")
+                    print(f"-{book.title} by{book.author} -{book.available_cp} copies available")
 
         if condition == 'display_member':
-            print("--- All members in library ---")
-            for j in range(len(self.members)):
-                member = self.members[j]
-                print(f"{j+1}. {member.name}(id: {member.id})")
+            member = func.find_member(condition_data)
+            if not member:
+                print("Error: Member not found!")
+                return None
 
-            print(f"Total members: {len(self.members)}")
+            print(f"\n=== Books borrowed by {member.name} ===")
+            if not member.borrowed_books:
+                print("No books currently borrowed")
+            else:
+                for transaction in member.borrowed_books:
+                    book = func.find_book(transaction['book_id'])
+                    if book:
+                        print(f"- {book.title} by {book.author}")
 
 
 #class store function that (help/used by) other class
@@ -153,7 +143,7 @@ class Function:
 
     def find_book(self, book_id):
         '''find book by id'''
-        for book in library.book:
+        for book in library.books:
             if book.id == book_id:
                 return book
         return None
@@ -161,7 +151,7 @@ class Function:
 
     def find_member(self, member_id):
         '''find member by id'''
-        for member in library.member:
+        for member in library.members:
             if member.id == member_id:
                 return member
         return None
@@ -199,26 +189,26 @@ def test_library_system():
     print("\n--- TEST 4: Successful Borrowing ---")
     library.borrow_book(101, 1)  # Alice borrows Python Crash Course
     library.borrow_book(101, 2)  # Alice borrows Clean Code
-    borrow_book(102, 1)  # Bob borrows Python Crash Course
+    library.borrow_book(102, 1)  # Bob borrows Python Crash Course
     
     # Test 5: Display Member's Borrowed Books
     print("\n--- TEST 5: Display Member's Books ---")
-    display_member_books(101)  # Alice's books
-    display_member_books(102)  # Bob's books
-    display_member_books(103)  # Carol's books (none)
+    library.display_operation('display_member', 101)  # Alice's books
+    library.display_operation('display_member', 102)  # Bob's books
+    library.display_operation('display_member', 103)  # Carol's books (none)
     
     # Test 6: Display Available Books After Borrowing
     print("\n--- TEST 6: Available Books After Borrowing ---")
-    display_available_books()
+    library.display_operation('display_book')
     
     # Test 7: Borrow Last Available Copy
     print("\n--- TEST 7: Borrowing Last Copy ---")
-    borrow_book(103, 3)  # Carol borrows the only copy of Pragmatic Programmer
-    display_available_books()
+    library.borrow_book(103, 3)  # Carol borrows the only copy of Pragmatic Programmer
+    library.display_operation('display_book')
     
     # Test 8: Try to Borrow Unavailable Book
     print("\n--- TEST 8: Attempting to Borrow Unavailable Book ---")
-    borrow_book(102, 3)  # Bob tries to borrow unavailable book
+    library.borrow_book(102, 3)  # Bob tries to borrow unavailable book
     
     # Test 9: Borrowing Limit Test
     print("\n--- TEST 9: Testing Borrowing Limit (3 books max) ---")
@@ -266,7 +256,7 @@ def test_library_system():
         else:
             print("  (No books borrowed)")
     
-    display_available_books()
+    library.display_operation('display_book')
     
     print("\n" + "=" * 60)
     print("TEST COMPLETE")
