@@ -38,39 +38,108 @@ class Member:
             for book_id in member.borrowed_books:
                 book = func.find_book(book_id)
                 if book:
-                    print(f"- {book.title} by {book.author}")    
+                    print(f"- {book.title} by {book.author}")
 
 
 class Library:
     def __init__(self):
         '''Library store book and member in list'''
-        self.book = []
-        self.member = []
+        self.books = []
+        self.members = []
 
 
     def add_book(self, book_id, title, author, available_copies):
         """Add a new book to the library"""
         book = Book(book_id, title, author, available_copies, available_copies)
-        self.book.append(book)
+        self.books.append(book)
         print(f'Book {title} added successfully!')
 
 
     def add_members(self, member_id, name, email):
         """Register a new library member"""
         member = Member(member_id, name, email)
-        self.member.append(member)
+        self.members.append(member)
         print(f'Member {name} added successfully!')
 
 
     def borrow_book(self, member_id, book_id):
-        # find book and member
+        """Process a book borrowing transaction"""
         book = func.find_book(book_id)
         member = func.find_member(member_id)
-
 
         if not member:
             print("Error: Member not found!")
             return False
+
+        if not book:
+            print("Error: Book not found!")
+            return False
+    
+        if book.available_copies <= 0:
+            print("Error: No copies available!")
+            return False
+
+        if len(member.borrowed_books) >= 3:
+            print("Error: Member has reached borrowing limit!")
+            return False
+        
+        # Process the borrowing
+        book.available_cp -= 1
+        member.borrowed_books.append(book_id)
+
+        transaction = {
+            'member_id': member_id,
+            'book_id': book_id,
+            'member_name': member.name,
+            'book_title': book.title
+        }
+        member.borrowed_books.append(transaction)
+
+        print(f"{member.name} borrowed '{book.title}'")
+        return True
+        
+
+    def return_book(member_id, book_id):
+        """Process a book return transaction"""
+        member = func.find_member(member_id)
+        book = func.find_book(book_id)
+
+        if not member or not book:
+            print("Error: Member or book not found!")
+            return False
+
+        if book_id not in member.borrowed_books:
+            print("Error: This member hasn't borrowed this book!")
+            return False
+
+        # Process the return
+        book.available_cp += 1
+        member.borrowed_books.remove(book_id)
+
+        # Remove from borrowed_books list
+        for i, transaction in enumerate(member.borrowed_books):
+            if transaction['member_id'] == member_id and transaction['book_id'] == book_id:
+                member.borrowed_books.pop(i)
+                break
+            
+        print(f"{member.name} returned '{book.title}'")
+        return True
+    
+
+    def display_operation(self):
+        '''display all data in library'''
+        print("--- All books in library ---")
+        for i in range(len(self.books)):
+            book = self.books[i]
+            print(f"{i+1}. {book.title}(id: {book.id}, author: {book.author}) {book.total_cp}/{book.available_cp}")
+
+        print("--- All members in library ---")
+        for j in range(len(self.members)):
+            member = self.members[j]
+            print(f"{j+1}. {member.name}(id: {member.id})")
+
+        print(f"Total books: {len(self.books)}")
+        print(f"Total members: {len(self.members)}")
 
 
 #class store function that (help/used by) other class
