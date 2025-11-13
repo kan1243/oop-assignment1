@@ -22,7 +22,7 @@ class Member:
         self.id = id_member
         self.name = name
         self.email = email
-        self.borrowed_book = borrowed_books
+        self.borrowed_books = borrowed_books
 
 
     def show_given_member_borrowed(self, member_id):
@@ -31,14 +31,14 @@ class Member:
             print("Error: Member not found!")
             return
         
-        print(f"\n=== Books borrowed by {member['name']} ===")
-        if not member['borrowed_books']:
+        print(f"\n=== Books borrowed by {member.name} ===")
+        if not member.borrowed_books:
             print("No books currently borrowed")
         else:
-            for book_id in member['borrowed_books']:
+            for book_id in member.borrowed_books:
                 book = func.find_book(book_id)
                 if book:
-                    print(f"- {book['title']} by {book['author']}")    
+                    print(f"- {book.title} by {book.author}")    
 
 
 class Library:
