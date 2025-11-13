@@ -1,6 +1,6 @@
 class Book:
     def __init__(self, id_book:str, title:str, author:str, total_coppies:int, available_coppies:int):
-        self.id = id_book
+        self.id_book = id_book
         self.title = title
         self.author = author
         self.total_cp = total_coppies
@@ -20,7 +20,7 @@ class Book:
 
 class Member:
     def __init__(self, id_member:str, name:str, email:str, borrowed_books:list = []):
-        self.id = id_member
+        self.member_id = id_member
         self.name = name
         self.email = email
         self.borrowed_books = borrowed_books
@@ -29,13 +29,13 @@ class Member:
     def borrow_book(self, book):
         if book.borrow_book():
             transaction = {
-            'member_id': self.id,
-            'book_id': book.id,
+            'member_id': self.member_id,
+            'book_id': book.id_book,
             'member_name': self.name,
-            'book_title': book.title
-            }
+            'book_title': book.title}
             self.borrowed_books.append(transaction)
             print(f"{self.name} borrowed '{book.title}'")
+
 
 
 class Library:
@@ -61,30 +61,28 @@ class Library:
 
     def borrow_book(self, member_id, book_id):
         """Process a book borrowing transaction"""
-        book = func.find_book(book_id)
-        member = func.find_member(member_id)
-
+        book = self.find_book(book_id)
+        member = self.find_member(member_id)
+        
         if not member:
             print("Error: Member not found!")
-            return False
 
-        if not book:
+        elif not book:
             print("Error: Book not found!")
-            return False
-
-        if len(member.borrowed_books) >= 3:
+            
+        elif len(member.borrowed_books) >= 3:
             print("Error: Member has reached borrowing limit!")
             return False
         
         # Process the borrowing
-        member.borrow_book(book)
-        return True
+        else:
+            member.borrow_book(book)
         
 
     def return_book(member_id, book_id):
         """Process a book return transaction"""
-        member = func.find_member(member_id)
-        book = func.find_book(book_id)
+        member = self.find_member(member_id)
+        book = self.find_book(book_id)
 
         if not member or not book:
             print("Error: Member or book not found!")
@@ -117,49 +115,43 @@ class Library:
                 if book.available_cp == 0:
                     continue
                 else:
-                    print(f"-{book.title} by{book.author} -{book.available_cp} copies available")
+                    print(f"-{book.title} by{book.author} - {book.available_cp} copies available")
 
         if condition == 'display_member':
-            member = func.find_member(condition_data)
+            member = self.find_member(condition_data)
             if not member:
                 print("Error: Member not found!")
                 return None
 
-            print(f"\n=== Books borrowed by {member.name} ===")
-            if not member.borrowed_books:
-                print("No books currently borrowed")
             else:
-                for transaction in member.borrowed_books:
-                    book = func.find_book(transaction['book_id'])
-                    if book:
-                        print(f"- {book.title} by {book.author}")
-
-
-#class store function that (help/used by) other class
-class Function:
-    def __init__(self):
-        pass
+                print(f"\n=== Books borrowed by {member.name} ===")
+                if not member.borrowed_books:
+                    print("No books currently borrowed")
+                else:
+                    for transaction in member.borrowed_books:
+                        book = self.find_book(transaction['book_id'])
+                        if book:
+                            print(f"- {book.title} by {book.author}")
 
 
     def find_book(self, book_id):
         '''find book by id'''
-        for book in library.books:
-            if book.id == book_id:
+        for book in self.books:
+            if book.id_book == book_id:
                 return book
         return None
 
 
     def find_member(self, member_id):
         '''find member by id'''
-        for member in library.members:
-            if member.id == member_id:
+        for member in self.members:
+            if member.member_id == member_id:
                 return member
         return None
     
 
 #create object
 library = Library()
-func = Function()
 
 def test_library_system():
     """Comprehensive test of all library functions"""
@@ -212,33 +204,33 @@ def test_library_system():
     
     # Test 9: Borrowing Limit Test
     print("\n--- TEST 9: Testing Borrowing Limit (3 books max) ---")
-    borrow_book(101, 4)  # Alice's 3rd book
-    display_member_books(101)
-    borrow_book(101, 3)  # Alice tries to borrow 4th book (should fail)
+    library.borrow_book(101, 4)  # Alice's 3rd book
+    library.display_operation('display_member', 101)
+    library.borrow_book(101, 3)  # Alice tries to borrow 4th book (should fail)
     
     # Test 10: Return Books
     print("\n--- TEST 10: Returning Books ---")
-    return_book(101, 1)  # Alice returns Python Crash Course
-    return_book(102, 1)  # Bob returns Python Crash Course
-    display_member_books(101)
-    display_available_books()
+    library.return_book(101, 1)  # Alice returns Python Crash Course
+    library.return_book(102, 1)  # Bob returns Python Crash Course
+    library.display_operation('display_member', 101)
+    library.display_operation('display_book')
     
     # Test 11: Try to Return Book Not Borrowed
     print("\n--- TEST 11: Attempting Invalid Return ---")
-    return_book(102, 2)  # Bob tries to return book he didn't borrow
+    library.return_book(102, 2)  # Bob tries to return book he didn't borrow
     
     # Test 12: Return and Borrow Again
     print("\n--- TEST 12: Return and Re-borrow ---")
-    return_book(103, 3)  # Carol returns Pragmatic Programmer
-    borrow_book(102, 3)  # Bob borrows it
-    display_member_books(102)
+    library.return_book(103, 3)  # Carol returns Pragmatic Programmer
+    library.borrow_book(102, 3)  # Bob borrows it
+    library.display_operation('display_member', 102)
     
     # Test 13: Error Cases - Non-existent Member/Book
     print("\n--- TEST 13: Error Handling ---")
-    borrow_book(999, 1)  # Non-existent member
-    borrow_book(101, 999)  # Non-existent book
-    return_book(999, 1)  # Non-existent member
-    display_member_books(999)  # Non-existent member
+    library.borrow_book(999, 1)  # Non-existent member
+    library.borrow_book(101, 999)  # Non-existent book
+    library.return_book(999, 1)  # Non-existent member
+    library.display_operation('display_member', 999)  # Non-existent member
     
     # Test 14: Final Status
     print("\n--- TEST 14: Final Library Status ---")
