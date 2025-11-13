@@ -36,7 +36,8 @@ class Member:
             'book_title': book.title}
             self.borrowed_books.append(transaction)
             print(f"{self.name} borrowed '{book.title}'")
-
+        else:
+            print('Error: No copies available!')
 
 
 class Library:
@@ -80,7 +81,7 @@ class Library:
             member.borrow_book(book)
         
 
-    def return_book(member_id, book_id):
+    def return_book(self, member_id, book_id):
         """Process a book return transaction"""
         member = self.find_member(member_id)
         book = self.find_book(book_id)
